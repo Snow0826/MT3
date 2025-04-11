@@ -50,6 +50,33 @@ inline constexpr Matrix4x4 MakeScaleMatrix(const Vector3 &scale) {
 	return result;
 }
 
+inline Matrix4x4 MakeRotateXMatrix(float radian) {
+	Matrix4x4 result = MakeIdentity4x4();
+	result.m[1][1] = std::cos(radian);
+	result.m[1][2] = std::sin(radian);
+	result.m[2][1] = -std::sin(radian);
+	result.m[2][2] = std::cos(radian);
+	return result;
+}
+
+inline Matrix4x4 MakeRotateYMatrix(float radian) {
+	Matrix4x4 result = MakeIdentity4x4();
+	result.m[0][0] = std::cos(radian);
+	result.m[0][2] = -std::sin(radian);
+	result.m[2][0] = std::sin(radian);
+	result.m[2][2] = std::cos(radian);
+	return result;
+}
+
+inline Matrix4x4 MakeRotateZMatrix(float radian) {
+	Matrix4x4 result = MakeIdentity4x4();
+	result.m[0][0] = std::cos(radian);
+	result.m[0][1] = std::sin(radian);
+	result.m[1][0] = -std::sin(radian);
+	result.m[1][1] = std::cos(radian);
+	return result;
+}
+
 inline constexpr Vector3 operator*(const Vector3 &vector, const Matrix4x4 &matrix) {
 	Vector3 result;
 	result.x = matrix.m[0][0] * vector.x + matrix.m[1][0] * vector.y + matrix.m[2][0] * vector.z + matrix.m[3][0];

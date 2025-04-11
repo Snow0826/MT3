@@ -34,14 +34,6 @@ inline constexpr Matrix4x4 MakeIdentity4x4() {
 	return result;
 }
 
-inline constexpr Matrix4x4 MakeTranslateMatrix(const Vector3 &translate) {
-	Matrix4x4 result = MakeIdentity4x4();
-	result.m[3][0] = translate.x;
-	result.m[3][1] = translate.y;
-	result.m[3][2] = translate.z;
-	return result;
-}
-
 inline constexpr Matrix4x4 MakeScaleMatrix(const Vector3 &scale) {
 	Matrix4x4 result = MakeIdentity4x4();
 	result.m[0][0] = scale.x;
@@ -75,6 +67,22 @@ inline Matrix4x4 MakeRotateZMatrix(float radian) {
 	result.m[1][0] = -std::sin(radian);
 	result.m[1][1] = std::cos(radian);
 	return result;
+}
+
+inline Matrix4x4 MakeRotateMatrix(const Vector3 &rotate) {
+	return MakeRotateXMatrix(rotate.x) * MakeRotateYMatrix(rotate.y) * MakeRotateZMatrix(rotate.z);
+}
+
+inline constexpr Matrix4x4 MakeTranslateMatrix(const Vector3 &translate) {
+	Matrix4x4 result = MakeIdentity4x4();
+	result.m[3][0] = translate.x;
+	result.m[3][1] = translate.y;
+	result.m[3][2] = translate.z;
+	return result;
+}
+
+inline Matrix4x4 MakeAffineMatrix(const Vector3 &scale, const Vector3 &rotate, const Vector3 &translate) {
+	return MakeScaleMatrix(scale) * MakeRotateMatrix(rotate) * MakeTranslateMatrix(translate);
 }
 
 inline constexpr Vector3 operator*(const Vector3 &vector, const Matrix4x4 &matrix) {

@@ -1,4 +1,4 @@
-#include <Novice.h>
+#include "Vector3.h"
 
 const char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3";
 
@@ -11,6 +11,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
 	char preKeys[256] = {0};
+
+	// ベクトルの初期化
+	Vector3 v1{ 1.0f, 3.0f, -5.0f };
+	Vector3 v2{ 4.0f, -1.0f, 2.0f };
+	float k = 4.0f;
+	const int kRowHeight = 20;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -25,6 +31,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
+		// ベクトルの演算
+		Vector3 resultAdd = v1 + v2;
+		Vector3 resultSubtract = v1 - v2;
+		Vector3 resultMultiply = k * v1;
+		float resultDot = v1.dot(v2);
+		float resultLength = v1.length();
+		Vector3 resultNormalize = v2.normalized();
+
 		///
 		/// ↑更新処理ここまで
 		///
@@ -32,6 +46,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
+
+		// ベクトルの演算結果を表示
+		VectorScreenPrintf(0, 0, resultAdd, " : Add");
+		VectorScreenPrintf(0, kRowHeight, resultSubtract, " : Subtract");
+		VectorScreenPrintf(0, kRowHeight * 2, resultMultiply, " : Multiply");
+		Novice::ScreenPrintf(0, kRowHeight * 3, "%.02f : Dot", resultDot);
+		Novice::ScreenPrintf(0, kRowHeight * 4, "%.02f : Length", resultLength);
+		VectorScreenPrintf(0, kRowHeight * 5, resultNormalize, " : Normalize");
 
 		///
 		/// ↑描画処理ここまで

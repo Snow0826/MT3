@@ -1,5 +1,5 @@
 #include "Matrix4x4.h"
-#include <cmath>
+#include <Novice.h>
 
 constexpr float kMax_err = 1.0E-10f;
 static const int kRowHeight = 20;
@@ -99,6 +99,19 @@ void Matrix4x4::operator/=(float other) {
 			m[i][j] /= other;
 		}
 	}
+}
+
+Vector3 Matrix4x4::operator*(const Vector3 &other) const {
+	Vector3 result;
+	result.x = m[0][0] * other.x + m[1][0] * other.y + m[2][0] * other.z + m[3][0];
+	result.y = m[0][1] * other.x + m[1][1] * other.y + m[2][1] * other.z + m[3][1];
+	result.z = m[0][2] * other.x + m[1][2] * other.y + m[2][2] * other.z + m[3][2];
+	float w = m[0][3] * other.x + m[1][3] * other.y + m[2][3] * other.z + m[3][3];
+	assert(w != 0.0f);
+	result.x /= w;
+	result.y /= w;
+	result.z /= w;
+	return result;
 }
 
 Matrix4x4 Matrix4x4::operator-() const {

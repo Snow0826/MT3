@@ -23,6 +23,14 @@ struct Vector3 final {
 	void operator/=(const float &s);
 	void ScreenPrintf(int w, int h, const char *label) const;
 
+	constexpr Vector3 cross(const Vector3 &other) const {
+		return {
+			this->y * other.z - this->z * other.y,
+			this->z * other.x - this->x * other.z,
+			this->x * other.y - this->y * other.x
+		};
+	}
+
 	float x = 0.0f;
 	float y = 0.0f;
 	float z = 0.0f;

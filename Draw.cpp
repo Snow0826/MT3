@@ -66,7 +66,7 @@ void DrawGrid(const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMa
 }
 
 void DrawSphere(const Sphere &sphere, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color) {
-	constexpr uint32_t kSubdivision = 20;	// 分割数
+	constexpr uint32_t kSubdivision = 16;	// 分割数
 	constexpr float kLonEvery = pi * 2.0f / static_cast<float>(kSubdivision);	// 経度分割1つ分の角度
 	constexpr float kLatEvery = pi / static_cast<float>(kSubdivision);	// 緯度分割1つ分の角度
 
@@ -77,14 +77,14 @@ void DrawSphere(const Sphere &sphere, const Matrix4x4 &viewProjectionMatrix, con
 		// 経度の方向に分割 0 ~ 2π
 		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
 			float lon = lonIndex * kLonEvery;	// 現在の経度
-			float bLon = lon + kLonEvery;
-			float cLat = lat + kLatEvery;
+			float nextLon = lon + kLonEvery;
+			float nextLat = lat + kLatEvery;
 
 			// a,b,cのworld座標系を求める
 			Vector3 a, b, c;
-			a = { std::cos(lon) * std::cos(lat), std::sin(lon), std::cos(lon) * std::sin(lat) };
-			b = { std::cos(bLon) * std::cos(lat), std::sin(bLon), std::cos(bLon) * std::sin(lat) };
-			c = { std::cos(lon) * std::cos(cLat), std::sin(lon), std::cos(lon) * std::sin(cLat) };
+			a = { std::cos(lat) * std::cos(lon), std::sin(lat), std::cos(lat) * std::sin(lon) };
+			b = { std::cos(nextLat) * std::cos(lon), std::sin(nextLat), std::cos(nextLat) * std::sin(lon) };
+			c = { std::cos(lat) * std::cos(nextLon), std::sin(lat), std::cos(lat) * std::sin(nextLon) };
 			a = sphere.center + sphere.radius * a;
 			b = sphere.center + sphere.radius * b;
 			c = sphere.center + sphere.radius * c;

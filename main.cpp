@@ -30,8 +30,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// 球の初期化
 	Sphere sphere[2]; 
-	sphere[0] = { { 0.0f, 0.0f, 0.0f }, 1.0f };
-	sphere[1] = { { 0.0f, 0.0f, 0.0f }, 1.0f };
+	sphere[0] = { { -1.5f, 0.0f, 3.0f }, 1.0f };
+	sphere[1] = { { 1.5f, 0.0f, 3.0f }, 1.0f };
 
 	// 球の色の初期化
 	uint32_t sphereColor[2];
@@ -97,10 +97,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// 球の衝突判定
 		if (isCollision(sphere[0], sphere[1])) {
 			sphereColor[0] = RED;
-			sphereColor[1] = RED;
 		} else {
 			sphereColor[0] = WHITE;
-			sphereColor[1] = WHITE;
 		}
 
 		// レンダリングパイプライン

@@ -7,6 +7,8 @@ struct Segment {
 	Vector3 diff;	// 終点への差分ベクトル
 };
 
+struct Sphere;
+
 /// @brief 射影関数
 /// @param v1 ベクトル1
 /// @param v2 ベクトル2
@@ -18,3 +20,9 @@ Vector3 Project(const Vector3 &v1, const Vector3 &v2);
 /// @param segment 線分
 /// @return 最近接点
 Vector3 ClosestPoint(const Vector3 &point, const Segment &segment);
+
+/// @brief 球の衝突判定
+/// @param sphere1 球1
+/// @param sphere2 球2
+/// @return 判定結果
+bool isCollision(const Sphere &sphere1, const Sphere &sphere2);

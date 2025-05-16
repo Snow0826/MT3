@@ -18,13 +18,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
+	// マウスの位置を受け取る箱
+	int preMouseX = 0;
+	int preMouseY = 0;
+	int mouseX = 0;
+	int mouseY = 0;
+
 	// カメラの初期化
 	Vector3 cameraTranslate = { 0.0f, 1.9f, -6.49f };
 	Vector3 cameraRotate = { 0.26f, 0.0f, 0.0f };
 
-	// 点と線分の初期化
-	Segment segment{ {-2.0f, -1.0f, 0.0f}, {3.0f, 2.0f, 2.0f} };
-	Vector3 point{ -1.5f, 0.6f, 0.6f };
+	// 球の初期化
+	Sphere sphere[2]; 
+	sphere[0] = { { 0.0f, 0.0f, 0.0f }, 1.0f };
+	sphere[1] = { { 0.0f, 0.0f, 0.0f }, 1.0f };
+
+	// 球の色の初期化
+	uint32_t sphereColor[2];
+	sphereColor[0] = WHITE;
+	sphereColor[1] = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -39,13 +51,57 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
-		// 正射影ベクトルと最近接点
-		Vector3 project = Project(point - segment.origin, segment.diff);
-		Vector3 closestPoint = ClosestPoint(point, segment);
+		// マウスの前フレームの位置を更新
+		preMouseX = mouseX;
+		preMouseY = mouseY;
 
-		// 描画用の点の初期化
-		Sphere pointSphere{ point, 0.01f };
-		Sphere closestPointSphere{ closestPoint, 0.01f };
+		if (keys[DIK_LSHIFT] && !preKeys[DIK_LSHIFT] || Novice::IsTriggerMouse(2)) {
+			Novice::GetMousePosition(&preMouseX, &preMouseY);	// マウスの前フレームの位置を取得
+		}
+
+		// カメラの操作
+		if (Novice::IsPressMouse(2)) {
+			Novice::GetMousePosition(&mouseX, &mouseY);	// マウスの現在フレームの位置を取得
+			if (keys[DIK_LSHIFT]) {
+				cameraTranslate.x -= (mouseX - preMouseX) * 0.01f;
+				cameraTranslate.y += (mouseY - preMouseY) * 0.01f;
+			} else {
+				cameraRotate.y -= (mouseX - preMouseX) * 0.01f;
+				cameraRotate.x += (mouseY - preMouseY) * 0.01f;
+			}
+		}
+
+		if (Novice::GetWheel() > 0) {
+			cameraTranslate.z += 0.1f;
+		} else if(Novice::GetWheel() < 0) {
+			cameraTranslate.z -= 0.1f;
+		}
+
+		// ImGuiの設定
+		ImGui::Begin("Debug");
+		
+		if (ImGui::TreeNode("sphere1")) {
+			ImGui::DragFloat3("center", &sphere[0].center.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat("radius", &sphere[0].radius, 0.01f, 0.0f, 10.0f);
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("sphere2")) {
+			ImGui::DragFloat3("center", &sphere[1].center.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat("radius", &sphere[1].radius, 0.01f, 0.0f, 10.0f);
+			ImGui::TreePop();
+		}
+
+		ImGui::End();
+
+		// 球の衝突判定
+		if (isCollision(sphere[0], sphere[1])) {
+			sphereColor[0] = RED;
+			sphereColor[1] = RED;
+		} else {
+			sphereColor[0] = WHITE;
+			sphereColor[1] = WHITE;
+		}
 
 		// レンダリングパイプライン
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotate, cameraTranslate);
@@ -65,26 +121,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		// 線分を描画
-		Vector3 start = segment.origin * viewProjectionMatrix * viewportMatrix;
-		Vector3 end = (segment.origin + segment.diff) * viewProjectionMatrix * viewportMatrix;
-		Novice::DrawLine(
-			static_cast<int32_t>(start.x),
-			static_cast<int32_t>(start.y),
-			static_cast<int32_t>(end.x),
-			static_cast<int32_t>(end.y), WHITE);
-
-		// 点を描画
-		DrawSphere(pointSphere, viewProjectionMatrix, viewportMatrix, RED);
-		DrawSphere(closestPointSphere, viewProjectionMatrix, viewportMatrix, BLACK);
-
-		// ImGuiを描画
-		ImGui::Begin("Debug");
-		ImGui::InputFloat3("Point", &point.x);
-		ImGui::InputFloat3("Segment origin", &segment.origin.x);
-		ImGui::InputFloat3("Segment diff", &segment.diff.x);
-		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
-		ImGui::End();
+		// 球を描画
+		DrawSphere(sphere[0], viewProjectionMatrix, viewportMatrix, sphereColor[0]);
+		DrawSphere(sphere[1], viewProjectionMatrix, viewportMatrix, sphereColor[1]);
 
 		///
 		/// ↑描画処理ここまで

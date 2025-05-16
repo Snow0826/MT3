@@ -18,3 +18,8 @@ bool isCollision(const Sphere &sphere1, const Sphere &sphere2) {
 	float distance = sphere1.center.distanceFrom(sphere2.center);
 	return distance <= sphere1.radius + sphere2.radius;
 }
+
+bool isCollision(const Sphere &sphere, const Plane &plane) {
+	float distance = std::abs(plane.normal.dot(sphere.center) - plane.distance);
+	return distance <= sphere.radius;
+}

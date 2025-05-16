@@ -8,6 +8,7 @@ struct Segment {
 };
 
 struct Sphere;
+struct Plane;
 
 /// @brief 射影関数
 /// @param v1 ベクトル1
@@ -21,8 +22,14 @@ Vector3 Project(const Vector3 &v1, const Vector3 &v2);
 /// @return 最近接点
 Vector3 ClosestPoint(const Vector3 &point, const Segment &segment);
 
-/// @brief 球の衝突判定
+/// @brief 球と球の衝突判定
 /// @param sphere1 球1
 /// @param sphere2 球2
 /// @return 判定結果
 bool isCollision(const Sphere &sphere1, const Sphere &sphere2);
+
+/// @brief 球と平面の衝突判定
+/// @param sphere 球
+/// @param plane 平面
+/// @return 判定結果
+bool isCollision(const Sphere &sphere, const Plane &plane);

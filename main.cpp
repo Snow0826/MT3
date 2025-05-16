@@ -29,14 +29,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 cameraRotate = { 0.26f, 0.0f, 0.0f };
 
 	// 球の初期化
-	Sphere sphere[2]; 
-	sphere[0] = { { -1.5f, 0.0f, 3.0f }, 1.0f };
-	sphere[1] = { { 1.5f, 0.0f, 3.0f }, 1.0f };
+	Sphere sphere;
+	sphere = { { 0.0f, 0.0f, 3.0f }, 1.0f };
 
-	// 球の色の初期化
-	uint32_t sphereColor[2];
-	sphereColor[0] = WHITE;
-	sphereColor[1] = WHITE;
+	// 平面の初期化
+	Plane plane;
+	plane = { { 0.0f, 1.0f, 0.0f }, 1.5f };
+
+	// 色の初期化
+	uint32_t sphereColor = WHITE;
+	uint32_t planeColor = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -80,25 +82,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// ImGuiの設定
 		ImGui::Begin("Debug");
 		
-		if (ImGui::TreeNode("sphere1")) {
-			ImGui::DragFloat3("center", &sphere[0].center.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat("radius", &sphere[0].radius, 0.01f, 0.0f, 10.0f);
+		if (ImGui::TreeNode("sphere")) {
+			ImGui::DragFloat3("center", &sphere.center.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat("radius", &sphere.radius, 0.01f, 0.0f, 10.0f);
 			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNode("sphere2")) {
-			ImGui::DragFloat3("center", &sphere[1].center.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat("radius", &sphere[1].radius, 0.01f, 0.0f, 10.0f);
+		if (ImGui::TreeNode("plane")) {
+			ImGui::DragFloat3("normal", &plane.normal.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat("distance", &plane.distance, 0.01f, -10.0f, 10.0f);
 			ImGui::TreePop();
 		}
 
 		ImGui::End();
 
+		plane.normal = plane.normal.normalized();	// 法線ベクトルを正規化
+
 		// 球の衝突判定
-		if (isCollision(sphere[0], sphere[1])) {
-			sphereColor[0] = RED;
+		if (isCollision(sphere, plane)) {
+			sphereColor = RED;
 		} else {
-			sphereColor[0] = WHITE;
+			sphereColor = WHITE;
 		}
 
 		// レンダリングパイプライン
@@ -120,8 +124,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
 		// 球を描画
-		DrawSphere(sphere[0], viewProjectionMatrix, viewportMatrix, sphereColor[0]);
-		DrawSphere(sphere[1], viewProjectionMatrix, viewportMatrix, sphereColor[1]);
+		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, sphereColor);
+
+		// 平面を描画
+		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, planeColor);
 
 		///
 		/// ↑描画処理ここまで

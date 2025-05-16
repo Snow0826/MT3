@@ -115,3 +115,53 @@ void DrawSphere(const Sphere &sphere, const Matrix4x4 &viewProjectionMatrix, con
 		}
 	}
 }
+
+Vector3 Perpendicular(const Vector3 &vector) {
+	if (vector.x != 0.0f || vector.y != 0.0f) {
+		return { -vector.y, vector.x, 0.0f };
+	}
+	return { 0.0f, -vector.z, vector.y };
+}
+
+void DrawPlane(const Plane &plane, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color) {
+	Vector3 center = plane.normal * plane.distance;	// 平面の中心
+	Vector3 perpendiculars[4];
+	perpendiculars[0] = Perpendicular(plane.normal).normalized();	// 平面の法線に垂直なベクトル
+	perpendiculars[1] = -perpendiculars[0];	// perpendiculars[0]の逆ベクトル
+	perpendiculars[2] = perpendiculars[0].cross(plane.normal);	// 法線とperpendiculars[0]の外積
+	perpendiculars[3] = -perpendiculars[2];	// perpendiculars[2]の逆ベクトル
+	Vector3 points[4];
+	for (int32_t index = 0; index < 4; ++index) {
+		Vector3 extend = perpendiculars[index] * 2.0f;
+		Vector3 point = center + extend;
+		points[index] = point * viewProjectionMatrix * viewportMatrix;
+	}
+	Novice::DrawLine(
+		static_cast<int32_t>(points[0].x),
+		static_cast<int32_t>(points[0].y),
+		static_cast<int32_t>(points[2].x),
+		static_cast<int32_t>(points[2].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(points[0].x),
+		static_cast<int32_t>(points[0].y),
+		static_cast<int32_t>(points[3].x),
+		static_cast<int32_t>(points[3].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(points[1].x),
+		static_cast<int32_t>(points[1].y),
+		static_cast<int32_t>(points[2].x),
+		static_cast<int32_t>(points[2].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(points[1].x),
+		static_cast<int32_t>(points[1].y),
+		static_cast<int32_t>(points[3].x),
+		static_cast<int32_t>(points[3].y),
+		color
+	);
+}

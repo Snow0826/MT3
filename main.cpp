@@ -1,5 +1,6 @@
 #include <Novice.h>
 #include "Matrix4x4.h"
+#include "Camera.h"
 #include "Draw.h"
 #include "Collision.h"
 #include <imgui.h>
@@ -18,26 +19,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
-	// マウスの位置を受け取る箱
-	int preMouseX = 0;
-	int preMouseY = 0;
-	int mouseX = 0;
-	int mouseY = 0;
-
 	// カメラの初期化
-	Vector3 cameraTranslate = { 0.0f, 1.9f, -6.49f };
-	Vector3 cameraRotate = { 0.26f, 0.0f, 0.0f };
+	Camera camera;
+	camera.Initialize();
 
-	// 球の初期化
-	Sphere sphere;
-	sphere = { { 0.0f, 0.0f, 3.0f }, 1.0f };
+	// 線分の初期化
+	Segment segment;
+	segment.origin = { 0.0f, 0.0f, 0.0f };
+	segment.diff = { 0.0f, 0.5f, 0.0f };
 
 	// 平面の初期化
 	Plane plane;
-	plane = { { 0.0f, 1.0f, 0.0f }, 1.5f };
+	plane = { { 0.0f, 1.0f, 0.0f }, 1.0f };
 
 	// 色の初期化
-	uint32_t sphereColor = WHITE;
+	uint32_t segmentColor = WHITE;
 	uint32_t planeColor = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -53,38 +49,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
-		// マウスの前フレームの位置を更新
-		preMouseX = mouseX;
-		preMouseY = mouseY;
-
-		if (keys[DIK_LSHIFT] && !preKeys[DIK_LSHIFT] || Novice::IsTriggerMouse(2)) {
-			Novice::GetMousePosition(&preMouseX, &preMouseY);	// マウスの前フレームの位置を取得
-		}
-
-		// カメラの操作
-		if (Novice::IsPressMouse(2)) {
-			Novice::GetMousePosition(&mouseX, &mouseY);	// マウスの現在フレームの位置を取得
-			if (keys[DIK_LSHIFT]) {
-				cameraTranslate.x -= (mouseX - preMouseX) * 0.01f;
-				cameraTranslate.y += (mouseY - preMouseY) * 0.01f;
-			} else {
-				cameraRotate.y -= (mouseX - preMouseX) * 0.01f;
-				cameraRotate.x += (mouseY - preMouseY) * 0.01f;
-			}
-		}
-
-		if (Novice::GetWheel() > 0) {
-			cameraTranslate.z += 0.1f;
-		} else if(Novice::GetWheel() < 0) {
-			cameraTranslate.z -= 0.1f;
-		}
+		// カメラの更新
+		camera.Update(keys, preKeys);
 
 		// ImGuiの設定
 		ImGui::Begin("Debug");
 		
-		if (ImGui::TreeNode("sphere")) {
-			ImGui::DragFloat3("center", &sphere.center.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat("radius", &sphere.radius, 0.01f, 0.0f, 10.0f);
+		if (ImGui::TreeNode("segment")) {
+			ImGui::DragFloat3("origin", &segment.origin.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("diff", &segment.diff.x, 0.01f, 0.0f, 10.0f);
 			ImGui::TreePop();
 		}
 
@@ -99,19 +72,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		plane.normal = plane.normal.normalized();	// 法線ベクトルを正規化
 
 		// 球の衝突判定
-		if (isCollision(sphere, plane)) {
-			sphereColor = RED;
+		if (isCollision(segment, plane)) {
+			segmentColor = RED;
 		} else {
-			sphereColor = WHITE;
+			segmentColor = WHITE;
 		}
 
 		// レンダリングパイプライン
-		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f, 1.0f, 1.0f }, cameraRotate, cameraTranslate);
-		Matrix4x4 viewMatrix = cameraMatrix.inverse();
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
-		Matrix4x4 viewProjectionMatrix = viewMatrix * projectionMatrix;
-		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight), 0.0f, 1.0f);
-		
+		Matrix4x4 viewProjectionMatrix = camera.GetViewMatrix() * projectionMatrix;
+		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight), 0.0f, 1.0f); 
+		Vector3 start = segment.origin * viewProjectionMatrix * viewportMatrix;
+		Vector3 end = (segment.origin + segment.diff) * viewProjectionMatrix * viewportMatrix;
+
 		///
 		/// ↑更新処理ここまで
 		///
@@ -124,7 +97,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
 		// 球を描画
-		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, sphereColor);
+		Novice::DrawLine(
+			static_cast<int32_t>(start.x),
+			static_cast<int32_t>(start.y),
+			static_cast<int32_t>(end.x),
+			static_cast<int32_t>(end.y),
+			segmentColor);
 
 		// 平面を描画
 		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, planeColor);

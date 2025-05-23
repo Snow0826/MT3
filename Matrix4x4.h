@@ -94,8 +94,12 @@ inline constexpr Matrix4x4 MakeTranslateMatrix(const Vector3 &translate) {
 	return result;
 }
 
-inline Matrix4x4 MakeAffineMatrix(const Vector3 &scale, const Vector3 &rotate, const Vector3 &translate) {
+inline Matrix4x4 MakeSRTMatrix(const Vector3 &scale, const Vector3 &rotate, const Vector3 &translate) {
 	return MakeScaleMatrix(scale) * MakeRotateMatrix(rotate) * MakeTranslateMatrix(translate);
+}
+
+inline Matrix4x4 MakeSTRMatrix(const Vector3 &scale, const Vector3 &translate, const Vector3 &rotate) {
+	return MakeScaleMatrix(scale) * MakeTranslateMatrix(translate) * MakeRotateMatrix(rotate);
 }
 
 inline Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip) {

@@ -1,4 +1,4 @@
-#include "Collision.h"
+﻿#include "Collision.h"
 #include "Draw.h"
 #include <algorithm>
 
@@ -22,4 +22,30 @@ bool isCollision(const Sphere &sphere1, const Sphere &sphere2) {
 bool isCollision(const Sphere &sphere, const Plane &plane) {
 	float distance = std::abs(plane.normal.dot(sphere.center) - plane.distance);
 	return distance <= sphere.radius;
+}
+
+bool isCollision(const Line &line, const Plane &plane) {
+	float dot = plane.normal.dot(line.diff);
+	if (dot == 0.0f) {
+		return false; // 平行
+	}
+	return true;
+}
+
+bool isCollision(const Ray &ray, const Plane &plane) {
+	float dot = plane.normal.dot(ray.diff);
+	if (dot == 0.0f) {
+		return false; // 平行
+	}
+	float t = (plane.distance - plane.normal.dot(ray.origin)) / dot;
+	return t >= 0.0f;
+}
+
+bool isCollision(const Segment &segment, const Plane &plane) {
+	float dot = plane.normal.dot(segment.diff);
+	if (dot == 0.0f) {
+		return false; // 平行
+	}
+	float t = (plane.distance - plane.normal.dot(segment.origin)) / dot;
+	return t >= 0.0f && t <= 1.0f;
 }

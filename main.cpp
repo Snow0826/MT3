@@ -23,18 +23,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Camera camera;
 	camera.Initialize();
 
+	// 三角形の初期化
+	Triangle triangle;
+	triangle.vertices[0] = { 0.0f, 1.0f, 0.0f };
+	triangle.vertices[1] = { 1.0f, 1.0f, 0.0f };
+	triangle.vertices[2] = { 0.0f, 1.0f, 1.0f };
+
 	// 線分の初期化
 	Segment segment;
 	segment.origin = { 0.0f, 0.0f, 0.0f };
 	segment.diff = { 0.0f, 0.5f, 0.0f };
 
-	// 平面の初期化
-	Plane plane;
-	plane = { { 0.0f, 1.0f, 0.0f }, 1.0f };
-
 	// 色の初期化
 	uint32_t segmentColor = WHITE;
-	uint32_t planeColor = WHITE;
+	uint32_t triangleColor = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -54,25 +56,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// ImGuiの設定
 		ImGui::Begin("Debug");
-		
+
+		if (ImGui::TreeNode("triangle")) {
+			ImGui::DragFloat3("vertex0", &triangle.vertices[0].x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("vertex1", &triangle.vertices[1].x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("vertex2", &triangle.vertices[2].x, 0.01f, -10.0f, 10.0f);
+			ImGui::TreePop();
+		}
+
 		if (ImGui::TreeNode("segment")) {
 			ImGui::DragFloat3("origin", &segment.origin.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat3("diff", &segment.diff.x, 0.01f, 0.0f, 10.0f);
 			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNode("plane")) {
-			ImGui::DragFloat3("normal", &plane.normal.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat("distance", &plane.distance, 0.01f, -10.0f, 10.0f);
-			ImGui::TreePop();
-		}
-
 		ImGui::End();
 
-		plane.normal = plane.normal.normalized();	// 法線ベクトルを正規化
-
-		// 球の衝突判定
-		if (isCollision(segment, plane)) {
+		// 三角形と線分の衝突判定
+		if (isCollision(triangle, segment)) {
 			segmentColor = RED;
 		} else {
 			segmentColor = WHITE;
@@ -96,16 +97,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		// 球を描画
+		// 三角形を描画
+		DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangleColor);
+
+		// 線分を描画
 		Novice::DrawLine(
 			static_cast<int32_t>(start.x),
 			static_cast<int32_t>(start.y),
 			static_cast<int32_t>(end.x),
 			static_cast<int32_t>(end.y),
 			segmentColor);
-
-		// 平面を描画
-		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, planeColor);
 
 		///
 		/// ↑描画処理ここまで

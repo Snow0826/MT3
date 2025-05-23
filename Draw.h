@@ -13,6 +13,11 @@ struct Plane {
 	float distance;	// 原点からの距離
 };;
 
+/// @brief 三角形
+struct Triangle {
+	Vector3 vertices[3];	// 頂点
+};
+
 /// @brief グリッドの描画関数
 /// @param viewProjectionMatrix vp行列
 /// @param viewportMatrix viewport変換行列
@@ -36,3 +41,10 @@ Vector3 Perpendicular(const Vector3 &vector);
 /// @param viewportMatrix viewport変換行列
 /// @param color 描画する色
 void DrawPlane(const Plane &plane, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color);
+
+/// @brief 三角形の描画関数
+/// @param triangle 三角形
+/// @param viewProjectionMatrix vp行列
+/// @param viewportMatrix viewport変換行列
+/// @param color 描画する色
+void DrawTriangle(const Triangle &triangle, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color);

@@ -165,3 +165,20 @@ void DrawPlane(const Plane &plane, const Matrix4x4 &viewProjectionMatrix, const 
 		color
 	);
 }
+
+void DrawTriangle(const Triangle &triangle, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color) {
+	Vector3 screenVertices[3];
+	for (int32_t index = 0; index < 3; ++index) {
+		screenVertices[index] = triangle.vertices[index] * viewProjectionMatrix * viewportMatrix;
+	}
+	Novice::DrawTriangle(
+		static_cast<int32_t>(screenVertices[0].x),
+		static_cast<int32_t>(screenVertices[0].y),
+		static_cast<int32_t>(screenVertices[1].x),
+		static_cast<int32_t>(screenVertices[1].y),
+		static_cast<int32_t>(screenVertices[2].x),
+		static_cast<int32_t>(screenVertices[2].y),
+		color,
+		kFillModeWireFrame
+	);
+}

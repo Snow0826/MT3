@@ -21,6 +21,7 @@ struct Segment {
 
 struct Sphere;
 struct Plane;
+struct Triangle;
 
 /// @brief 射影関数
 /// @param v1 ベクトル1
@@ -28,7 +29,19 @@ struct Plane;
 /// @return 正射影ベクトル
 Vector3 Project(const Vector3 &v1, const Vector3 &v2);
 
-/// @brief 最近接点を求める関数
+/// @brief 点と直線の最近接点を求める関数
+/// @param point 点
+/// @param line 直線
+/// @return 最近接点
+Vector3 ClosestPoint(const Vector3 &point, const Line &line);
+
+/// @brief 点と半直線の最近接点を求める関数
+/// @param point 点
+/// @param ray 半直線
+/// @return 最近接点
+Vector3 ClosestPoint(const Vector3 &point, const Ray &ray);
+
+/// @brief 点と線分の最近接点を求める関数
 /// @param point 点
 /// @param segment 線分
 /// @return 最近接点
@@ -63,3 +76,21 @@ bool isCollision(const Ray &ray, const Plane &plane);
 /// @param plane 平面
 /// @return 判定結果
 bool isCollision(const Segment &segment, const Plane &plane);
+
+/// @brief 三角形と直線の衝突判定
+/// @param triangle 三角形
+/// @param line 直線
+/// @return 判定結果
+bool isCollision(const Triangle &triangle, const Line &line);
+
+/// @brief 三角形と半直線の衝突判定
+/// @param triangle 三角形
+/// @param ray 半直線
+/// @return 判定結果
+bool isCollision(const Triangle &triangle, const Ray &ray);
+
+/// @brief 三角形と線分の衝突判定
+/// @param triangle 三角形
+/// @param segment 線分
+/// @return 判定結果
+bool isCollision(const Triangle &triangle, const Segment &segment);

@@ -24,21 +24,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Camera camera;
 	camera.Initialize();
 
-	// AABB1の初期化
-	AABB aabb1{
+	// AABBの初期化
+	AABB aabb{
 		.min{-0.5f, -0.5f, -0.5f},	// 最小点
 		.max{0.0f, 0.0f, 0.0f}	// 最大点
 	};
 
-	// AABB2の初期化
-	AABB aabb2{
-		.min{0.2f, 0.2f, 0.2f},	// 最小点
-		.max{1.0f, 1.0f, 1.0f}	// 最大点
+	// 球の初期化
+	Sphere sphere{
+		.center{1.0f, 1.0f, 1.0f},	// 中心点
+		.radius{1.0f}			// 半径
 	};
 
 	// 色の初期化
-	uint32_t aabb1Color = WHITE;
-	uint32_t aabb2Color = WHITE;
+	uint32_t aabbColor = WHITE;
+	uint32_t sphereColor = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -59,41 +59,33 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// ImGuiの設定
 		ImGui::Begin("Debug");
 
-		if(ImGui::TreeNode("AABB1")) {
-			ImGui::DragFloat3("Min", &aabb1.min.x, 0.01f);
-			ImGui::DragFloat3("Max", &aabb1.max.x, 0.01f);
+		if(ImGui::TreeNode("AABB")) {
+			ImGui::DragFloat3("Min", &aabb.min.x, 0.01f);
+			ImGui::DragFloat3("Max", &aabb.max.x, 0.01f);
 			// 最小点は最大点以下にする
-			aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
-			aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
-			aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
+			aabb.min.x = (std::min)(aabb.min.x, aabb.max.x);
+			aabb.min.y = (std::min)(aabb.min.y, aabb.max.y);
+			aabb.min.z = (std::min)(aabb.min.z, aabb.max.z);
 			// 最大点は最小点以上にする
-			aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
-			aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
-			aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
+			aabb.max.x = (std::max)(aabb.min.x, aabb.max.x);
+			aabb.max.y = (std::max)(aabb.min.y, aabb.max.y);
+			aabb.max.z = (std::max)(aabb.min.z, aabb.max.z);
 			ImGui::TreePop();
 		}
 
-		if(ImGui::TreeNode("AABB2")) {
-			ImGui::DragFloat3("Min", &aabb2.min.x, 0.01f);
-			ImGui::DragFloat3("Max", &aabb2.max.x, 0.01f);
-			// 最小点は最大点以下にする
-			aabb2.min.x = (std::min)(aabb2.min.x, aabb2.max.x);
-			aabb2.min.y = (std::min)(aabb2.min.y, aabb2.max.y);
-			aabb2.min.z = (std::min)(aabb2.min.z, aabb2.max.z);
-			// 最大点は最小点以上にする
-			aabb2.max.x = (std::max)(aabb2.min.x, aabb2.max.x);
-			aabb2.max.y = (std::max)(aabb2.min.y, aabb2.max.y);
-			aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
+		if(ImGui::TreeNode("Sphere")) {
+			ImGui::DragFloat3("Center", &sphere.center.x, 0.01f);
+			ImGui::DragFloat("Radius", &sphere.radius, 0.01f);
 			ImGui::TreePop();
 		}
 
 		ImGui::End();
 
-		// AABB1とAABB2の衝突判定
-		if (isCollision(aabb1, aabb2)) {
-			aabb1Color = RED;
+		// AABBと球の衝突判定
+		if (isCollision(aabb, sphere)) {
+			aabbColor = RED;
 		} else {
-			aabb1Color = WHITE;
+			aabbColor = WHITE;
 		}
 
 		// レンダリングパイプライン
@@ -112,11 +104,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		// AABB1を描画
-		DrawAABB(aabb1, viewProjectionMatrix, viewportMatrix, aabb1Color);
+		// AABBを描画
+		DrawAABB(aabb, viewProjectionMatrix, viewportMatrix, aabbColor);
 
-		// AABB2を描画
-		DrawAABB(aabb2, viewProjectionMatrix, viewportMatrix, aabb2Color);
+		// 球を描画
+		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, sphereColor);
 
 		///
 		/// ↑描画処理ここまで

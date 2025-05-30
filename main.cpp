@@ -27,18 +27,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// AABBの初期化
 	AABB aabb{
 		.min{-0.5f, -0.5f, -0.5f},	// 最小点
-		.max{0.0f, 0.0f, 0.0f}	// 最大点
+		.max{0.5f, 0.5f, 0.5f}	// 最大点
 	};
 
-	// 球の初期化
-	Sphere sphere{
-		.center{1.0f, 1.0f, 1.0f},	// 中心点
-		.radius{1.0f}			// 半径
+	// 線分の初期化
+	Segment segment{
+		.origin{-0.7f, 0.3f, 0.0f},
+		.diff{2.0f, -0.5f, 0.0f}
 	};
 
 	// 色の初期化
 	uint32_t aabbColor = WHITE;
-	uint32_t sphereColor = WHITE;
+	uint32_t segmentColor = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -73,16 +73,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::TreePop();
 		}
 
-		if(ImGui::TreeNode("Sphere")) {
-			ImGui::DragFloat3("Center", &sphere.center.x, 0.01f);
-			ImGui::DragFloat("Radius", &sphere.radius, 0.01f);
+		if(ImGui::TreeNode("Segment")) {
+			ImGui::DragFloat3("Origin", &segment.origin.x, 0.01f);
+			ImGui::DragFloat3("Diff", &segment.diff.x, 0.01f);
 			ImGui::TreePop();
 		}
 
 		ImGui::End();
 
-		// AABBと球の衝突判定
-		if (isCollision(aabb, sphere)) {
+		// AABBと線分の衝突判定
+		if (isCollision(aabb, segment)) {
 			aabbColor = RED;
 		} else {
 			aabbColor = WHITE;
@@ -107,8 +107,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// AABBを描画
 		DrawAABB(aabb, viewProjectionMatrix, viewportMatrix, aabbColor);
 
-		// 球を描画
-		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, sphereColor);
+		// 線分を描画
+		Vector3 start = segment.origin * viewProjectionMatrix * viewportMatrix;
+		Vector3 end = (segment.origin + segment.diff) * viewProjectionMatrix * viewportMatrix;
+		Novice::DrawLine(
+			static_cast<int32_t>(start.x),
+			static_cast<int32_t>(start.y),
+			static_cast<int32_t>(end.x),
+			static_cast<int32_t>(end.y),
+			segmentColor
+		);
 
 		///
 		/// ↑描画処理ここまで

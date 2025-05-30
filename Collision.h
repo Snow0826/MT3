@@ -107,3 +107,21 @@ bool isCollision(const AABB &aabb1, const AABB &aabb2);
 /// @param sphere 球
 /// @return 判定結果
 bool isCollision(const AABB &aabb, const Sphere &sphere);
+
+/// @brief AABBと直線の衝突判定
+/// @param aabb AABB
+/// @param line 直線
+/// @return 判定結果
+bool isCollision(const AABB &aabb, const Line &line);
+
+/// @brief AABBと半直線の衝突判定
+/// @param aabb AABB
+/// @param ray 半直線
+/// @return 判定結果
+bool isCollision(const AABB &aabb, const Ray &ray);
+
+/// @brief AABBと線分の衝突判定
+/// @param aabb AABB
+/// @param segment 線分
+/// @return 判定結果
+bool isCollision(const AABB &aabb, const Segment &segment);

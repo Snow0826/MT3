@@ -140,3 +140,81 @@ bool isCollision(const AABB &aabb, const Sphere &sphere) {
 	float distance = closestPoint.distanceFrom(sphere.center);
 	return distance <= sphere.radius;
 }
+
+bool isCollision(const AABB &aabb, const Line &line) {
+	Vector3 tMin{
+		(aabb.min.x - line.origin.x) / line.diff.x,
+		(aabb.min.y - line.origin.y) / line.diff.y,
+		(aabb.min.z - line.origin.z) / line.diff.z
+	};
+	Vector3 tMax{
+		(aabb.max.x - line.origin.x) / line.diff.x,
+		(aabb.max.y - line.origin.y) / line.diff.y,
+		(aabb.max.z - line.origin.z) / line.diff.z
+	};
+	Vector3 tNear{
+		std::min(tMin.x, tMax.x),
+		std::min(tMin.y, tMax.y),
+		std::min(tMin.z, tMax.z)
+	};
+	Vector3 tFar{
+		std::max(tMin.x, tMax.x),
+		std::max(tMin.y, tMax.y),
+		std::max(tMin.z, tMax.z)
+	};
+	float tmin = std::max(std::max(tNear.x, tNear.y), tNear.z);
+	float tmax = std::min(std::min(tFar.x, tFar.y), tFar.z);
+	return tmin <= tmax;
+}
+
+bool isCollision(const AABB &aabb, const Ray &ray) {
+	Vector3 tMin{
+		(aabb.min.x - ray.origin.x) / ray.diff.x,
+		(aabb.min.y - ray.origin.y) / ray.diff.y,
+		(aabb.min.z - ray.origin.z) / ray.diff.z
+	};
+	Vector3 tMax{
+		(aabb.max.x - ray.origin.x) / ray.diff.x,
+		(aabb.max.y - ray.origin.y) / ray.diff.y,
+		(aabb.max.z - ray.origin.z) / ray.diff.z
+	};
+	Vector3 tNear{
+		std::min(tMin.x, tMax.x),
+		std::min(tMin.y, tMax.y),
+		std::min(tMin.z, tMax.z)
+	};
+	Vector3 tFar{
+		std::max(tMin.x, tMax.x),
+		std::max(tMin.y, tMax.y),
+		std::max(tMin.z, tMax.z)
+	};
+	float tmin = std::max(std::max(tNear.x, tNear.y), tNear.z);
+	float tmax = std::min(std::min(tFar.x, tFar.y), tFar.z);
+	return tmin <= tmax && tmax >= 0.0f;
+}
+
+bool isCollision(const AABB &aabb, const Segment &segment) {
+	Vector3 tMin{
+		(aabb.min.x - segment.origin.x) / segment.diff.x,
+		(aabb.min.y - segment.origin.y) / segment.diff.y,
+		(aabb.min.z - segment.origin.z) / segment.diff.z
+	};
+	Vector3 tMax{
+		(aabb.max.x - segment.origin.x) / segment.diff.x,
+		(aabb.max.y - segment.origin.y) / segment.diff.y,
+		(aabb.max.z - segment.origin.z) / segment.diff.z
+	};
+	Vector3 tNear{
+		std::min(tMin.x, tMax.x),
+		std::min(tMin.y, tMax.y),
+		std::min(tMin.z, tMax.z)
+	};
+	Vector3 tFar{
+		std::max(tMin.x, tMax.x),
+		std::max(tMin.y, tMax.y),
+		std::max(tMin.z, tMax.z)
+	};
+	float tmin = std::max(std::max(tNear.x, tNear.y), tNear.z);
+	float tmax = std::min(std::min(tFar.x, tFar.y), tFar.z);
+	return tmin <= tmax && tmax >= 0.0f && tmin <= 1.0f;
+}

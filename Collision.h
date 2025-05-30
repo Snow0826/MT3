@@ -22,6 +22,7 @@ struct Segment {
 struct Sphere;
 struct Plane;
 struct Triangle;
+struct AABB;
 
 /// @brief 射影関数
 /// @param v1 ベクトル1
@@ -94,3 +95,9 @@ bool isCollision(const Triangle &triangle, const Ray &ray);
 /// @param segment 線分
 /// @return 判定結果
 bool isCollision(const Triangle &triangle, const Segment &segment);
+
+/// @brief AABBとAABBの衝突判定
+/// @param aabb1 AABB1
+/// @param aabb2 AABB2
+/// @return 判定結果
+bool isCollision(const AABB &aabb1, const AABB &aabb2);

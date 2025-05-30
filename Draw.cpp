@@ -182,3 +182,107 @@ void DrawTriangle(const Triangle &triangle, const Matrix4x4 &viewProjectionMatri
 		kFillModeWireFrame
 	);
 }
+
+void DrawAABB(const AABB &aabb, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color) {
+	Vector3 vertices[8] = {
+		{ aabb.min.x, aabb.min.y, aabb.min.z },
+		{ aabb.max.x, aabb.min.y, aabb.min.z },
+		{ aabb.max.x, aabb.max.y, aabb.min.z },
+		{ aabb.min.x, aabb.max.y, aabb.min.z },
+		{ aabb.min.x, aabb.min.y, aabb.max.z },
+		{ aabb.max.x, aabb.min.y, aabb.max.z },
+		{ aabb.max.x, aabb.max.y, aabb.max.z },
+		{ aabb.min.x, aabb.max.y, aabb.max.z }
+	};
+
+	Vector3 screenVertices[8];
+	for (int32_t index = 0; index < 8; ++index) {
+		screenVertices[index] = vertices[index] * viewProjectionMatrix * viewportMatrix;
+	}
+
+	// 12本の線を引く
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[0].x),
+		static_cast<int32_t>(screenVertices[0].y),
+		static_cast<int32_t>(screenVertices[1].x),
+		static_cast<int32_t>(screenVertices[1].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[1].x),
+		static_cast<int32_t>(screenVertices[1].y),
+		static_cast<int32_t>(screenVertices[2].x),
+		static_cast<int32_t>(screenVertices[2].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[2].x),
+		static_cast<int32_t>(screenVertices[2].y),
+		static_cast<int32_t>(screenVertices[3].x),
+		static_cast<int32_t>(screenVertices[3].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[3].x),
+		static_cast<int32_t>(screenVertices[3].y),
+		static_cast<int32_t>(screenVertices[0].x),
+		static_cast<int32_t>(screenVertices[0].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[4].x),
+		static_cast<int32_t>(screenVertices[4].y),
+		static_cast<int32_t>(screenVertices[5].x),
+		static_cast<int32_t>(screenVertices[5].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[5].x),
+		static_cast<int32_t>(screenVertices[5].y),
+		static_cast<int32_t>(screenVertices[6].x),
+		static_cast<int32_t>(screenVertices[6].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[6].x),
+		static_cast<int32_t>(screenVertices[6].y),
+		static_cast<int32_t>(screenVertices[7].x),
+		static_cast<int32_t>(screenVertices[7].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[7].x),
+		static_cast<int32_t>(screenVertices[7].y),
+		static_cast<int32_t>(screenVertices[4].x),
+		static_cast<int32_t>(screenVertices[4].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[0].x),
+		static_cast<int32_t>(screenVertices[0].y),
+		static_cast<int32_t>(screenVertices[4].x),
+		static_cast<int32_t>(screenVertices[4].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[1].x),
+		static_cast<int32_t>(screenVertices[1].y),
+		static_cast<int32_t>(screenVertices[5].x),
+		static_cast<int32_t>(screenVertices[5].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[2].x),
+		static_cast<int32_t>(screenVertices[2].y),
+		static_cast<int32_t>(screenVertices[6].x),
+		static_cast<int32_t>(screenVertices[6].y),
+		color
+	);
+	Novice::DrawLine(
+		static_cast<int32_t>(screenVertices[3].x),
+		static_cast<int32_t>(screenVertices[3].y),
+		static_cast<int32_t>(screenVertices[7].x),
+		static_cast<int32_t>(screenVertices[7].y),
+		color
+	);
+}

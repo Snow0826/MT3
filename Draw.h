@@ -18,6 +18,11 @@ struct Triangle {
 	Vector3 vertices[3];	// 頂点
 };
 
+struct AABB {
+	Vector3 min;	// 最小点
+	Vector3 max;	// 最大点
+};
+
 /// @brief グリッドの描画関数
 /// @param viewProjectionMatrix vp行列
 /// @param viewportMatrix viewport変換行列
@@ -48,3 +53,10 @@ void DrawPlane(const Plane &plane, const Matrix4x4 &viewProjectionMatrix, const 
 /// @param viewportMatrix viewport変換行列
 /// @param color 描画する色
 void DrawTriangle(const Triangle &triangle, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color);
+
+/// @brief AABBの描画関数
+/// @param aabb AABB
+/// @param viewProjectionMatrix vp行列
+/// @param viewportMatrix viewport変換行列
+/// @param color 描画する色
+void DrawAABB(const AABB &aabb, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color);

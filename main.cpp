@@ -4,6 +4,7 @@
 #include "Draw.h"
 #include "Collision.h"
 #include <imgui.h>
+#include <algorithm>
 
 constexpr char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3_02_00";
 constexpr int32_t kWindowWidth = 1280;	// ウィンドウの幅
@@ -23,20 +24,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Camera camera;
 	camera.Initialize();
 
-	// 三角形の初期化
-	Triangle triangle;
-	triangle.vertices[0] = { 0.0f, 1.0f, 0.0f };
-	triangle.vertices[1] = { 1.0f, 1.0f, 0.0f };
-	triangle.vertices[2] = { 0.0f, 1.0f, 1.0f };
+	// AABB1の初期化
+	AABB aabb1{
+		.min{-0.5f, -0.5f, -0.5f},	// 最小点
+		.max{0.0f, 0.0f, 0.0f}	// 最大点
+	};
 
-	// 線分の初期化
-	Segment segment;
-	segment.origin = { 0.0f, 0.0f, 0.0f };
-	segment.diff = { 0.0f, 0.5f, 0.0f };
+	// AABB2の初期化
+	AABB aabb2{
+		.min{0.2f, 0.2f, 0.2f},	// 最小点
+		.max{1.0f, 1.0f, 1.0f}	// 最大点
+	};
 
 	// 色の初期化
-	uint32_t segmentColor = WHITE;
-	uint32_t triangleColor = WHITE;
+	uint32_t aabb1Color = WHITE;
+	uint32_t aabb2Color = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -57,34 +59,47 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// ImGuiの設定
 		ImGui::Begin("Debug");
 
-		if (ImGui::TreeNode("triangle")) {
-			ImGui::DragFloat3("vertex0", &triangle.vertices[0].x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat3("vertex1", &triangle.vertices[1].x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat3("vertex2", &triangle.vertices[2].x, 0.01f, -10.0f, 10.0f);
+		if(ImGui::TreeNode("AABB1")) {
+			ImGui::DragFloat3("Min", &aabb1.min.x, 0.01f);
+			ImGui::DragFloat3("Max", &aabb1.max.x, 0.01f);
+			// 最小点は最大点以下にする
+			aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
+			aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
+			aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
+			// 最大点は最小点以上にする
+			aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
+			aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
+			aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
 			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNode("segment")) {
-			ImGui::DragFloat3("origin", &segment.origin.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat3("diff", &segment.diff.x, 0.01f, 0.0f, 10.0f);
+		if(ImGui::TreeNode("AABB2")) {
+			ImGui::DragFloat3("Min", &aabb2.min.x, 0.01f);
+			ImGui::DragFloat3("Max", &aabb2.max.x, 0.01f);
+			// 最小点は最大点以下にする
+			aabb2.min.x = (std::min)(aabb2.min.x, aabb2.max.x);
+			aabb2.min.y = (std::min)(aabb2.min.y, aabb2.max.y);
+			aabb2.min.z = (std::min)(aabb2.min.z, aabb2.max.z);
+			// 最大点は最小点以上にする
+			aabb2.max.x = (std::max)(aabb2.min.x, aabb2.max.x);
+			aabb2.max.y = (std::max)(aabb2.min.y, aabb2.max.y);
+			aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
 			ImGui::TreePop();
 		}
 
 		ImGui::End();
 
-		// 三角形と線分の衝突判定
-		if (isCollision(triangle, segment)) {
-			segmentColor = RED;
+		// AABB1とAABB2の衝突判定
+		if (isCollision(aabb1, aabb2)) {
+			aabb1Color = RED;
 		} else {
-			segmentColor = WHITE;
+			aabb1Color = WHITE;
 		}
 
 		// レンダリングパイプライン
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
 		Matrix4x4 viewProjectionMatrix = camera.GetViewMatrix() * projectionMatrix;
-		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight), 0.0f, 1.0f); 
-		Vector3 start = segment.origin * viewProjectionMatrix * viewportMatrix;
-		Vector3 end = (segment.origin + segment.diff) * viewProjectionMatrix * viewportMatrix;
+		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight), 0.0f, 1.0f);
 
 		///
 		/// ↑更新処理ここまで
@@ -97,16 +112,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		// 三角形を描画
-		DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangleColor);
+		// AABB1を描画
+		DrawAABB(aabb1, viewProjectionMatrix, viewportMatrix, aabb1Color);
 
-		// 線分を描画
-		Novice::DrawLine(
-			static_cast<int32_t>(start.x),
-			static_cast<int32_t>(start.y),
-			static_cast<int32_t>(end.x),
-			static_cast<int32_t>(end.y),
-			segmentColor);
+		// AABB2を描画
+		DrawAABB(aabb2, viewProjectionMatrix, viewportMatrix, aabb2Color);
 
 		///
 		/// ↑描画処理ここまで

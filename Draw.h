@@ -60,3 +60,12 @@ void DrawTriangle(const Triangle &triangle, const Matrix4x4 &viewProjectionMatri
 /// @param viewportMatrix viewport変換行列
 /// @param color 描画する色
 void DrawAABB(const AABB &aabb, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color);
+
+/// @brief ベジェ曲線の描画関数
+/// @param controlPoint0 制御点0
+/// @param controlPoint1 制御点1
+/// @param controlPoint2 制御点2
+/// @param viewProjectionMatrix vp行列
+/// @param viewportMatrix viewport変換行列
+/// @param color 描画する色
+void DrawBezier(const Vector3 &controlPoint0, const Vector3 &controlPoint1, const Vector3 &controlPoint2, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color);

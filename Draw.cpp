@@ -1,5 +1,6 @@
 ﻿#define _USE_MATH_DEFINES
 #include "Draw.h"
+#include "Math.h"
 #include <Novice.h>
 
 constexpr float pi = static_cast<float>(M_PI);	// 円周率
@@ -285,4 +286,30 @@ void DrawAABB(const AABB &aabb, const Matrix4x4 &viewProjectionMatrix, const Mat
 		static_cast<int32_t>(screenVertices[7].y),
 		color
 	);
+}
+
+void DrawBezier(const Vector3 &controlPoint0, const Vector3 &controlPoint1, const Vector3 &controlPoint2, const Matrix4x4 &viewProjectionMatrix, const Matrix4x4 &viewportMatrix, uint32_t color) {
+	constexpr uint32_t split = 32;
+	for (uint32_t i = 0; i < split; i++) {
+		float t0 = static_cast<float>(i) / static_cast<float>(split);
+		float t1 = static_cast<float>(i + 1) / static_cast<float>(split);
+
+		Vector3 p0 = Lerp(controlPoint0, controlPoint1, t0);
+		Vector3 p1 = Lerp(controlPoint1, controlPoint2, t0);
+		Vector3 bezier0 = Lerp(p0, p1, t0);
+
+		p0 = Lerp(controlPoint0, controlPoint1, t1);
+		p1 = Lerp(controlPoint1, controlPoint2, t1);
+		Vector3 bezier1 = Lerp(p0, p1, t1);
+
+		Vector3 start = bezier0 * viewProjectionMatrix * viewportMatrix;
+		Vector3 end = bezier1 * viewProjectionMatrix * viewportMatrix;
+
+		Novice::DrawLine(
+			static_cast<int32_t>(start.x),
+			static_cast<int32_t>(start.y),
+			static_cast<int32_t>(end.x),
+			static_cast<int32_t>(end.y),
+			color);
+	}
 }

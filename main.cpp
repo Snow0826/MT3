@@ -24,21 +24,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Camera camera;
 	camera.Initialize();
 
-	// AABBの初期化
-	AABB aabb{
-		.min{-0.5f, -0.5f, -0.5f},	// 最小点
-		.max{0.5f, 0.5f, 0.5f}	// 最大点
+	// 制御点の初期化
+	Sphere controlPoints[3] = {
+		{ { -0.8f, 0.58f, 1.0f }, 0.01f },
+		{ {  1.76f, 1.0f, -0.3f }, 0.01f },
+		{ {  0.94f, -0.7f, 2.3f }, 0.01f }
 	};
-
-	// 線分の初期化
-	Segment segment{
-		.origin{-0.7f, 0.3f, 0.0f},
-		.diff{2.0f, -0.5f, 0.0f}
-	};
-
-	// 色の初期化
-	uint32_t aabbColor = WHITE;
-	uint32_t segmentColor = WHITE;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -59,34 +50,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// ImGuiの設定
 		ImGui::Begin("Debug");
 
-		if(ImGui::TreeNode("AABB")) {
-			ImGui::DragFloat3("Min", &aabb.min.x, 0.01f);
-			ImGui::DragFloat3("Max", &aabb.max.x, 0.01f);
-			// 最小点は最大点以下にする
-			aabb.min.x = (std::min)(aabb.min.x, aabb.max.x);
-			aabb.min.y = (std::min)(aabb.min.y, aabb.max.y);
-			aabb.min.z = (std::min)(aabb.min.z, aabb.max.z);
-			// 最大点は最小点以上にする
-			aabb.max.x = (std::max)(aabb.min.x, aabb.max.x);
-			aabb.max.y = (std::max)(aabb.min.y, aabb.max.y);
-			aabb.max.z = (std::max)(aabb.min.z, aabb.max.z);
-			ImGui::TreePop();
-		}
-
-		if(ImGui::TreeNode("Segment")) {
-			ImGui::DragFloat3("Origin", &segment.origin.x, 0.01f);
-			ImGui::DragFloat3("Diff", &segment.diff.x, 0.01f);
+		if(ImGui::TreeNode("Control Points")) {
+			for (int i = 0; i < 3; ++i) {
+				ImGui::PushID(i);
+				ImGui::DragFloat3("Position", &controlPoints[i].center.x, 0.01f, -10.0f, 10.0f);
+				ImGui::PopID();
+			}
 			ImGui::TreePop();
 		}
 
 		ImGui::End();
-
-		// AABBと線分の衝突判定
-		if (isCollision(aabb, segment)) {
-			aabbColor = RED;
-		} else {
-			aabbColor = WHITE;
-		}
 
 		// レンダリングパイプライン
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
@@ -104,19 +77,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		// AABBを描画
-		DrawAABB(aabb, viewProjectionMatrix, viewportMatrix, aabbColor);
+		// ベジェ曲線を描画
+		DrawBezier(controlPoints[0].center, controlPoints[1].center, controlPoints[2].center, viewProjectionMatrix, viewportMatrix, BLUE);
 
-		// 線分を描画
-		Vector3 start = segment.origin * viewProjectionMatrix * viewportMatrix;
-		Vector3 end = (segment.origin + segment.diff) * viewProjectionMatrix * viewportMatrix;
-		Novice::DrawLine(
-			static_cast<int32_t>(start.x),
-			static_cast<int32_t>(start.y),
-			static_cast<int32_t>(end.x),
-			static_cast<int32_t>(end.y),
-			segmentColor
-		);
+		// 制御点を描画
+		for (const auto& point : controlPoints) {
+			DrawSphere(point, viewProjectionMatrix, viewportMatrix, BLACK);
+		}
 
 		///
 		/// ↑描画処理ここまで

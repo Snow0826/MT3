@@ -1,9 +1,6 @@
 #include <Novice.h>
-#include "Camera.h"
-#include "Draw.h"
-#include "Collision.h"
 #include <imgui.h>
-#include <string>
+#include "Matrix4x4.h"
 
 constexpr char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3_02_00";
 constexpr int32_t kWindowWidth = 1280;	// ウィンドウの幅
@@ -19,39 +16,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
-	// カメラの初期化
-	Camera camera;
-	camera.Initialize();
-
-	// ローカル座標系の肩、肘、手の球の初期化
-	Sphere localSpheres[3];
-	for (Sphere &sphere : localSpheres) {
-		sphere = { { 0.0f, 0.0f, 0.0f }, 0.1f };
-	}
-
-	// 肩、肘、手の位置の初期化
-	Vector3 translates[3] = {
-		{ 0.2f, 1.0f, 0.0f },
-		{ 0.4f, 0.0f, 0.0f },
-		{ 0.3f, 0.0f, 0.0f }
-	};
-
-	// 肩、肘、手の向きの初期化
-	Vector3 rotates[3] = {
-		{ 0.0f, 0.0f, -6.8f },
-		{ 0.0f, 0.0f, -1.4f },
-		{ 0.0f, 0.0f,  0.0f }
-	};
-
-	// 肩、肘、手の大きさの初期化
-	Vector3 scales[3] = {
-		{ 1.0f, 1.0f, 1.0f },
-		{ 1.0f, 1.0f, 1.0f },
-		{ 1.0f, 1.0f, 1.0f }
-	};
-
-	// 肩、肘、手の色の初期化
-	uint32_t colors[3] = { RED, GREEN, BLUE };
+	Vector3 a{ 0.2f, 1.0f, 0.0f };
+	Vector3 b{ 2.4f, 3.1f, 1.2f };
+	Vector3 c = a + b;	// ベクトルの加算
+	Vector3 d = a - b;	// ベクトルの減算
+	Vector3 e = a * 2.4f;	// ベクトルのスカラー倍
+	Vector3 rotate{ 0.4f, 1.43f, -0.8f };
+	Matrix4x4 rotateXMatrix = MakeRotateXMatrix(rotate.x);
+	Matrix4x4 rotateYMatrix = MakeRotateYMatrix(rotate.y);
+	Matrix4x4 rotateZMatrix = MakeRotateZMatrix(rotate.z);
+	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -66,58 +40,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
-		// カメラの更新
-		camera.Update(keys, preKeys);
-
 		// ImGuiの設定
-		ImGui::Begin("Debug");
-
-		if(ImGui::TreeNode("Hierarchy")) {
-
-			std::string lables[3] = {
-				"Shoulder",
-				"Elbow",
-				"Hand"
-			};
-
-			for (uint32_t i = 0; i < 3; ++i) {
-				if (ImGui::TreeNode(lables[i].c_str())) {
-					ImGui::DragFloat3("Position", &translates[i].x, 0.01f, -10.0f, 10.0f);
-					ImGui::DragFloat3("Rotation", &rotates[i].x, 0.1f, -180.0f, 180.0f);
-					ImGui::DragFloat3("Scale", &scales[i].x, 0.01f, 0.1f, 10.0f);
-					ImGui::TreePop();
-				}
-			}
-			
-			ImGui::TreePop();
-		}
-
+		ImGui::Begin("Window");
+		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
+		ImGui::Text("d:%f, %f, %f", d.x, d.y, d.z);
+		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
+		ImGui::Text(
+			"matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n",
+			rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2], rotateMatrix.m[0][3],
+			rotateMatrix.m[1][0], rotateMatrix.m[1][1], rotateMatrix.m[1][2], rotateMatrix.m[1][3],
+			rotateMatrix.m[2][0], rotateMatrix.m[2][1], rotateMatrix.m[2][2], rotateMatrix.m[2][3],
+			rotateMatrix.m[3][0], rotateMatrix.m[3][1], rotateMatrix.m[3][2], rotateMatrix.m[3][3]);
 		ImGui::End();
-
-		// ローカル行列を作成
-		Matrix4x4 localMatrix[3];
-		for(uint32_t i = 0; i < 3; ++i) {
-			localMatrix[i] = MakeSRTMatrix(scales[i], rotates[i], translates[i]);
-		}
-
-		// ワールド行列を作成
-		Matrix4x4 worldMatrix[3] = {
-			localMatrix[0],
-			localMatrix[1] * localMatrix[0],
-			localMatrix[2] * localMatrix[1] * localMatrix[0]
-		};
-
-		// ワールド座標系の肩、肘、手の球を作成
-		Sphere worldSpheres[3];
-		for (uint32_t i = 0; i < 3; ++i) {
-			worldSpheres[i] = localSpheres[i];
-			worldSpheres[i].center = localSpheres[i].center * worldMatrix[i];
-		}
-
-		// レンダリングパイプライン
-		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
-		Matrix4x4 viewProjectionMatrix = camera.GetViewMatrix() * projectionMatrix;
-		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight), 0.0f, 1.0f);
 
 		///
 		/// ↑更新処理ここまで
@@ -126,38 +60,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-
-		// グリッドを描画
-		DrawGrid(viewProjectionMatrix, viewportMatrix);
-
-		// 肩、肘、手の球のスクリーン座標を作成
-		Vector3 screenPositions[3];
-		for (uint32_t i = 0; i < 3; ++i) {
-			screenPositions[i] = worldSpheres[i].center * viewProjectionMatrix * viewportMatrix;
-		}
-
-		// 肩ー肘の線を描画
-		Novice::DrawLine(
-			static_cast<int32_t>(screenPositions[0].x),
-			static_cast<int32_t>(screenPositions[0].y),
-			static_cast<int32_t>(screenPositions[1].x),
-			static_cast<int32_t>(screenPositions[1].y),
-			WHITE
-		);
-
-		// 肘ー手の線を描画
-		Novice::DrawLine(
-			static_cast<int32_t>(screenPositions[1].x),
-			static_cast<int32_t>(screenPositions[1].y),
-			static_cast<int32_t>(screenPositions[2].x),
-			static_cast<int32_t>(screenPositions[2].y),
-			WHITE
-		);
-
-		// 肩、肘、手の球を描画
-		for (uint32_t i = 0; i < 3; ++i) {
-			DrawSphere(worldSpheres[i], viewProjectionMatrix, viewportMatrix, colors[i]);
-		}
 
 		///
 		/// ↑描画処理ここまで

@@ -1,5 +1,6 @@
 #include <Novice.h>
 #include <imgui.h>
+#include <numbers>
 #include "Camera.h"
 #include "Draw.h"
 #include "Physics.h"
@@ -22,20 +23,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Camera camera;
 	camera.Initialize();
 
-	// ばねの初期化
-	Spring spring{};
-	spring.anchor = { 0.0f, 0.0f, 0.0f };
-	spring.naturalLength = 1.0f;
-	spring.stiffness = 100.0f;
-	spring.dampingCoefficient = 2.0f;
-
 	// ボールの初期化
 	Ball ball{};
-	ball.position = { 1.2f, 0.0f, 0.0f };
-	ball.mass = 2.0f;
+	ball.position = { 0.8f, 0.0f, 0.0f };
+	ball.mass = 1.0f;
 	ball.radius = 0.05f;
 	ball.color = BLUE;
 
+	Vector3 center;	// 円の中心座標
+	float radius = 0.8f; // 円の半径
+	float angularVelocity = std::numbers::pi_v<float>; // ボールの角速度
+	float angle = 0.0f; // ボールの角度
 	float deltaTime = 1.0f / 60.0f; // 1フレームあたりの時間（秒）
 	bool isStarted = false; // シミュレーションが開始されたかどうか
 
@@ -63,20 +61,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 		
 		if (isStarted) {
-			Vector3 diff = ball.position - spring.anchor; // ボールとばねのアンカーの差分を計算
-			float length = diff.length(); // 差分の長さを計算
-			if (length != 0.0f) {
-				Vector3 direction = diff.normalized(); // 差分の方向を正規化
-				Vector3 restPosition = spring.anchor + direction * spring.naturalLength; // ばねの自然長に基づく位置を計算
-				Vector3 displacement = length * (ball.position - restPosition); // ボールの位置とばねの自然長に基づく位置の差分を計算
-				Vector3 restoringForce = -spring.stiffness * displacement; // ばねの復元力を計算
-				Vector3 dampingForce = -spring.dampingCoefficient * ball.velocity; // 減衰力を計算
-				Vector3 force = restoringForce + dampingForce; // 力の合計を計算
-				ball.acceleration = force / ball.mass; // ボールの加速度を計算
-			}
-
-			ball.velocity += ball.acceleration * deltaTime; // ボールの速度を更新
-			ball.position += ball.velocity * deltaTime; // ボールの位置を更新
+			angle += angularVelocity * deltaTime; // ボールの角度を更新
+			ball.position.x = center.x + std::cos(angle) * radius; // ボールの位置を更新
+			ball.position.y = center.y + std::sin(angle) * radius; // ボールの位置を更新
+			ball.position.z = center.z; // Z座標は円の中心のZ座標に固定
 		}
 
 		// レンダリングパイプライン
@@ -94,17 +82,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
-
-		// アンカーから球までの線を描画
-		Vector3 start = spring.anchor * viewProjectionMatrix * viewportMatrix; // ばねのアンカー位置
-		Vector3 end = ball.position * viewProjectionMatrix * viewportMatrix; // ボールの位置を変換
-		Novice::DrawLine(
-			static_cast<int32_t>(start.x),
-			static_cast<int32_t>(start.y),
-			static_cast<int32_t>(end.x),
-			static_cast<int32_t>(end.y),
-			WHITE
-		);
 
 		// 球を描画
 		Sphere sphere{};

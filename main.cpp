@@ -1,6 +1,8 @@
 #include <Novice.h>
 #include <imgui.h>
-#include "Matrix4x4.h"
+#include "Camera.h"
+#include "Draw.h"
+#include "Physics.h"
 
 constexpr char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3_02_00";
 constexpr int32_t kWindowWidth = 1280;	// ウィンドウの幅
@@ -16,16 +18,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
-	Vector3 a{ 0.2f, 1.0f, 0.0f };
-	Vector3 b{ 2.4f, 3.1f, 1.2f };
-	Vector3 c = a + b;	// ベクトルの加算
-	Vector3 d = a - b;	// ベクトルの減算
-	Vector3 e = a * 2.4f;	// ベクトルのスカラー倍
-	Vector3 rotate{ 0.4f, 1.43f, -0.8f };
-	Matrix4x4 rotateXMatrix = MakeRotateXMatrix(rotate.x);
-	Matrix4x4 rotateYMatrix = MakeRotateYMatrix(rotate.y);
-	Matrix4x4 rotateZMatrix = MakeRotateZMatrix(rotate.z);
-	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
+	// カメラの初期化
+	Camera camera;
+	camera.Initialize();
+
+	// ばねの初期化
+	Spring spring{};
+	spring.anchor = { 0.0f, 0.0f, 0.0f };
+	spring.naturalLength = 1.0f;
+	spring.stiffness = 100.0f;
+	spring.dampingCoefficient = 2.0f;
+
+	// ボールの初期化
+	Ball ball{};
+	ball.position = { 1.2f, 0.0f, 0.0f };
+	ball.mass = 2.0f;
+	ball.radius = 0.05f;
+	ball.color = BLUE;
+
+	float deltaTime = 1.0f / 60.0f; // 1フレームあたりの時間（秒）
+	bool isStarted = false; // シミュレーションが開始されたかどうか
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -40,18 +52,37 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
+		// カメラの更新
+		camera.Update(keys, preKeys);
+
 		// ImGuiの設定
 		ImGui::Begin("Window");
-		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
-		ImGui::Text("d:%f, %f, %f", d.x, d.y, d.z);
-		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
-		ImGui::Text(
-			"matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n",
-			rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2], rotateMatrix.m[0][3],
-			rotateMatrix.m[1][0], rotateMatrix.m[1][1], rotateMatrix.m[1][2], rotateMatrix.m[1][3],
-			rotateMatrix.m[2][0], rotateMatrix.m[2][1], rotateMatrix.m[2][2], rotateMatrix.m[2][3],
-			rotateMatrix.m[3][0], rotateMatrix.m[3][1], rotateMatrix.m[3][2], rotateMatrix.m[3][3]);
+		if (ImGui::Button("Start")) {
+			isStarted = true; // シミュレーションを開始
+		}
 		ImGui::End();
+		
+		if (isStarted) {
+			Vector3 diff = ball.position - spring.anchor; // ボールとばねのアンカーの差分を計算
+			float length = diff.length(); // 差分の長さを計算
+			if (length != 0.0f) {
+				Vector3 direction = diff.normalized(); // 差分の方向を正規化
+				Vector3 restPosition = spring.anchor + direction * spring.naturalLength; // ばねの自然長に基づく位置を計算
+				Vector3 displacement = length * (ball.position - restPosition); // ボールの位置とばねの自然長に基づく位置の差分を計算
+				Vector3 restoringForce = -spring.stiffness * displacement; // ばねの復元力を計算
+				Vector3 dampingForce = -spring.dampingCoefficient * ball.velocity; // 減衰力を計算
+				Vector3 force = restoringForce + dampingForce; // 力の合計を計算
+				ball.acceleration = force / ball.mass; // ボールの加速度を計算
+			}
+
+			ball.velocity += ball.acceleration * deltaTime; // ボールの速度を更新
+			ball.position += ball.velocity * deltaTime; // ボールの位置を更新
+		}
+
+		// レンダリングパイプライン
+		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
+		Matrix4x4 viewProjectionMatrix = camera.GetViewMatrix() * projectionMatrix;
+		Matrix4x4 viewportMatrix = MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight), 0.0f, 1.0f);
 
 		///
 		/// ↑更新処理ここまで
@@ -60,6 +91,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
+
+		// グリッドを描画
+		DrawGrid(viewProjectionMatrix, viewportMatrix);
+
+		// アンカーから球までの線を描画
+		Vector3 start = spring.anchor * viewProjectionMatrix * viewportMatrix; // ばねのアンカー位置
+		Vector3 end = ball.position * viewProjectionMatrix * viewportMatrix; // ボールの位置を変換
+		Novice::DrawLine(
+			static_cast<int32_t>(start.x),
+			static_cast<int32_t>(start.y),
+			static_cast<int32_t>(end.x),
+			static_cast<int32_t>(end.y),
+			WHITE
+		);
+
+		// 球を描画
+		Sphere sphere{};
+		sphere.center = ball.position;
+		sphere.radius = ball.radius;
+		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, ball.color);
 
 		///
 		/// ↑描画処理ここまで

@@ -4,7 +4,7 @@
 #include "Draw.h"
 #include "Physics.h"
 
-constexpr char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3_02_00";
+constexpr char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3_04_03";
 constexpr int32_t kWindowWidth = 1280;	// ウィンドウの幅
 constexpr int32_t kWindowHeight = 720;	// ウィンドウの高さ
 
@@ -29,13 +29,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ball.radius = 0.05f;
 	ball.color = WHITE;
 
-	// 振り子の初期化
-	Pendulum pendulum{};
-	pendulum.anchor = { 0.0f, 1.0f, 0.0f };
-	pendulum.length = 0.8f;
-	pendulum.angle = 0.7f;
-	pendulum.angularVelocity = 0.0f;
-	pendulum.angularAcceleration = 0.0f;
+	// 円錐振り子の初期化
+	ConicalPendulum conicalPendulum{};
+	conicalPendulum.anchor = { 0.0f, 1.0f, 0.0f };
+	conicalPendulum.length = 0.8f;
+	conicalPendulum.halfApexAngle = 0.7f;
+	conicalPendulum.angle = 0.0f;
+	conicalPendulum.angularVelocity = 0.0f;
 
 	float deltaTime = 1.0f / 60.0f; // 1フレームあたりの時間（秒）
 	bool isStarted = false; // シミュレーションが開始されたかどうか
@@ -61,18 +61,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (ImGui::Button("Start")) {
 			isStarted = true; // シミュレーションを開始
 		}
+		ImGui::SliderFloat("Length", &conicalPendulum.length, 0.1f, 2.0f); // 円錐振り子の長さを調整
+		ImGui::SliderFloat("HalfApexAngle", &conicalPendulum.halfApexAngle, 0.1f, 1.5f); // 円錐振り子の半頂角を調整
 		ImGui::End();
 
 		if (isStarted) {
-			pendulum.angularAcceleration = -9.8f / pendulum.length * std::sin(pendulum.angle); // 振り子の角加速度を計算
-			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime; // 角速度を更新
-			pendulum.angle += pendulum.angularVelocity * deltaTime; // 角度を更新
+			conicalPendulum.angularVelocity = std::sqrt(9.8f / (conicalPendulum.length * std::cos(conicalPendulum.halfApexAngle)));	// 振り子の角速度を計算
+			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime; // 振り子の角度を更新
 		}
 
 		// ボールの位置を更新
-		ball.position.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
-		ball.position.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
-		ball.position.z = pendulum.anchor.z; // Z座標は固定
+		float radius = std::sin(conicalPendulum.halfApexAngle) * conicalPendulum.length; // 半径を計算
+		float height = std::cos(conicalPendulum.halfApexAngle) * conicalPendulum.length; // 高さを計算
+		ball.position.x = conicalPendulum.anchor.x + std::cos(conicalPendulum.angle) * radius;
+		ball.position.y = conicalPendulum.anchor.y - height;
+		ball.position.z = conicalPendulum.anchor.z - std::sin(conicalPendulum.angle) * radius;
 
 		// レンダリングパイプライン
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
@@ -90,8 +93,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		// アンカーから振り子の先端までの線を描画
-		Vector3 start = pendulum.anchor * viewProjectionMatrix * viewportMatrix;
+		// アンカーから円錐振り子の先端までの線を描画
+		Vector3 start = conicalPendulum.anchor * viewProjectionMatrix * viewportMatrix;
 		Vector3 end = ball.position * viewProjectionMatrix * viewportMatrix;
 		Novice::DrawLine(
 			static_cast<int32_t>(start.x),

@@ -1,6 +1,5 @@
 #include <Novice.h>
 #include <imgui.h>
-#include <numbers>
 #include "Camera.h"
 #include "Draw.h"
 #include "Physics.h"
@@ -25,15 +24,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ボールの初期化
 	Ball ball{};
-	ball.position = { 0.8f, 0.0f, 0.0f };
+	ball.position = { 0.0f, 0.0f, 0.0f };
 	ball.mass = 1.0f;
 	ball.radius = 0.05f;
-	ball.color = BLUE;
+	ball.color = WHITE;
 
-	Vector3 center;	// 円の中心座標
-	float radius = 0.8f; // 円の半径
-	float angularVelocity = std::numbers::pi_v<float>; // ボールの角速度
-	float angle = 0.0f; // ボールの角度
+	// 振り子の初期化
+	Pendulum pendulum{};
+	pendulum.anchor = { 0.0f, 1.0f, 0.0f };
+	pendulum.length = 0.8f;
+	pendulum.angle = 0.7f;
+	pendulum.angularVelocity = 0.0f;
+	pendulum.angularAcceleration = 0.0f;
+
 	float deltaTime = 1.0f / 60.0f; // 1フレームあたりの時間（秒）
 	bool isStarted = false; // シミュレーションが開始されたかどうか
 
@@ -59,13 +62,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			isStarted = true; // シミュレーションを開始
 		}
 		ImGui::End();
-		
+
 		if (isStarted) {
-			angle += angularVelocity * deltaTime; // ボールの角度を更新
-			ball.position.x = center.x + std::cos(angle) * radius; // ボールの位置を更新
-			ball.position.y = center.y + std::sin(angle) * radius; // ボールの位置を更新
-			ball.position.z = center.z; // Z座標は円の中心のZ座標に固定
+			pendulum.angularAcceleration = -9.8f / pendulum.length * std::sin(pendulum.angle); // 振り子の角加速度を計算
+			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime; // 角速度を更新
+			pendulum.angle += pendulum.angularVelocity * deltaTime; // 角度を更新
 		}
+
+		// ボールの位置を更新
+		ball.position.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
+		ball.position.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
+		ball.position.z = pendulum.anchor.z; // Z座標は固定
 
 		// レンダリングパイプライン
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
@@ -82,6 +89,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
+
+		// アンカーから振り子の先端までの線を描画
+		Vector3 start = pendulum.anchor * viewProjectionMatrix * viewportMatrix;
+		Vector3 end = ball.position * viewProjectionMatrix * viewportMatrix;
+		Novice::DrawLine(
+			static_cast<int32_t>(start.x),
+			static_cast<int32_t>(start.y),
+			static_cast<int32_t>(end.x),
+			static_cast<int32_t>(end.y),
+			WHITE
+		);
 
 		// 球を描画
 		Sphere sphere{};

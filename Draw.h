@@ -1,27 +1,10 @@
 ﻿#pragma once
 #include "Matrix4x4.h"
 
-/// @brief 球
-struct Sphere {
-	Vector3 center;	// 中心点
-	float radius;	// 半径
-};
-
-/// @brief 平面
-struct Plane {
-	Vector3 normal;	// 法線ベクトル
-	float distance;	// 原点からの距離
-};;
-
-/// @brief 三角形
-struct Triangle {
-	Vector3 vertices[3];	// 頂点
-};
-
-struct AABB {
-	Vector3 min;	// 最小点
-	Vector3 max;	// 最大点
-};
+struct Sphere;
+struct Plane;
+struct Triangle;
+struct AABB;
 
 /// @brief グリッドの描画関数
 /// @param viewProjectionMatrix vp行列

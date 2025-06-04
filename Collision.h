@@ -19,10 +19,34 @@ struct Segment {
 	Vector3 diff;	// 終点への差分ベクトル
 };
 
-struct Sphere;
-struct Plane;
-struct Triangle;
-struct AABB;
+/// @brief カプセル
+struct Capsule {
+	Segment segment;	// 線分部分
+	float radius;	// 半径
+};
+
+/// @brief 球
+struct Sphere {
+	Vector3 center;	// 中心点
+	float radius;	// 半径
+};
+
+/// @brief 平面
+struct Plane {
+	Vector3 normal;	// 法線ベクトル
+	float distance;	// 原点からの距離
+};;
+
+/// @brief 三角形
+struct Triangle {
+	Vector3 vertices[3];	// 頂点
+};
+
+/// @brief 軸並行境界箱
+struct AABB {
+	Vector3 min;	// 最小点
+	Vector3 max;	// 最大点
+};
 
 /// @brief 射影関数
 /// @param v1 ベクトル1
@@ -125,3 +149,9 @@ bool isCollision(const AABB &aabb, const Ray &ray);
 /// @param segment 線分
 /// @return 判定結果
 bool isCollision(const AABB &aabb, const Segment &segment);
+
+/// @brief カプセルと平面の衝突判定
+/// @param capsule カプセル
+/// @param plane 平面
+/// @return 判定結果
+bool isCollision(const Capsule &capsule, const Plane &plane);

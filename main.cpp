@@ -3,8 +3,9 @@
 #include "Camera.h"
 #include "Draw.h"
 #include "Physics.h"
+#include "Collision.h"
 
-constexpr char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3_04_03";
+constexpr char kWindowTitle[] = "LE2A_03_クラタ_ユウキ_MT3_04_04";
 constexpr int32_t kWindowWidth = 1280;	// ウィンドウの幅
 constexpr int32_t kWindowHeight = 720;	// ウィンドウの高さ
 
@@ -22,21 +23,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Camera camera;
 	camera.Initialize();
 
+	// 平面の初期化
+	Plane plane{};
+	plane.normal = Vector3{ -0.2f, 1.1f, -0.3f }.normalized();
+	plane.distance = 0.0f;
+
 	// ボールの初期化
 	Ball ball{};
-	ball.position = { 0.0f, 0.0f, 0.0f };
-	ball.mass = 1.0f;
+	ball.position = { 0.8f, 1.2f, 0.3f };
+	ball.acceleration = { 0.0f, -9.8f, 0.0f };
+	ball.mass = 2.0f;
 	ball.radius = 0.05f;
 	ball.color = WHITE;
 
-	// 円錐振り子の初期化
-	ConicalPendulum conicalPendulum{};
-	conicalPendulum.anchor = { 0.0f, 1.0f, 0.0f };
-	conicalPendulum.length = 0.8f;
-	conicalPendulum.halfApexAngle = 0.7f;
-	conicalPendulum.angle = 0.0f;
-	conicalPendulum.angularVelocity = 0.0f;
+	// カプセルの初期化
+	Capsule capsule{};
+	capsule.radius = ball.radius;
 
+	constexpr float e = 0.8f; // 反発係数
 	float deltaTime = 1.0f / 60.0f; // 1フレームあたりの時間（秒）
 	bool isStarted = false; // シミュレーションが開始されたかどうか
 
@@ -61,21 +65,40 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (ImGui::Button("Start")) {
 			isStarted = true; // シミュレーションを開始
 		}
-		ImGui::SliderFloat("Length", &conicalPendulum.length, 0.1f, 2.0f); // 円錐振り子の長さを調整
-		ImGui::SliderFloat("HalfApexAngle", &conicalPendulum.halfApexAngle, 0.1f, 1.5f); // 円錐振り子の半頂角を調整
+		ImGui::DragFloat3("BallPosition", &ball.position.x, 0.01f, -1.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // ボールの位置を調整
+		ImGui::DragFloat3("BallVelocity", &ball.velocity.x, 0.01f, -10.0f, 10.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // ボールの速度を調整
+		ImGui::DragFloat3("PlaneNormal", &plane.normal.x, 0.01f, -1.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // 平面の法線ベクトルを調整
+		plane.normal = plane.normal.normalized(); // 法線ベクトルを正規化
+		if (ImGui::Button("Reset")) {
+			isStarted = false; // シミュレーションをリセット
+			ball.position = { 0.8f, 1.2f, 0.3f }; // ボールの位置を初期化
+			ball.velocity = { 0.0f, 0.0f, 0.0f }; // ボールの速度を初期化
+			capsule.segment.origin = ball.position; // カプセルの始点をボールの位置に設定
+			capsule.segment.diff = { 0.0f, 0.0f, 0.0f }; // カプセルの差分ベクトルを初期化
+			ball.color = WHITE; // ボールの色を初期化
+		}
 		ImGui::End();
 
 		if (isStarted) {
-			conicalPendulum.angularVelocity = std::sqrt(9.8f / (conicalPendulum.length * std::cos(conicalPendulum.halfApexAngle)));	// 振り子の角速度を計算
-			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime; // 振り子の角度を更新
-		}
+			capsule.segment.origin = ball.position; // カプセルの始点を前フレームのボールの位置に設定
+			ball.velocity += ball.acceleration * deltaTime; // 速度の更新
+			ball.position += ball.velocity * deltaTime; // 位置の更新
+			capsule.segment.diff = ball.position - capsule.segment.origin; // ボールの位置の現在フレームと前フレームの差分ベクトルを計算
 
-		// ボールの位置を更新
-		float radius = std::sin(conicalPendulum.halfApexAngle) * conicalPendulum.length; // 半径を計算
-		float height = std::cos(conicalPendulum.halfApexAngle) * conicalPendulum.length; // 高さを計算
-		ball.position.x = conicalPendulum.anchor.x + std::cos(conicalPendulum.angle) * radius;
-		ball.position.y = conicalPendulum.anchor.y - height;
-		ball.position.z = conicalPendulum.anchor.z - std::sin(conicalPendulum.angle) * radius;
+			if (isCollision(capsule, plane) && ball.velocity.y < 0.0f) {
+				if (isCollision(capsule.segment, plane)) {
+					float t = (plane.distance - plane.normal.dot(capsule.segment.origin)) / plane.normal.dot(capsule.segment.diff);	// 衝突時刻の計算
+					ball.position = capsule.segment.origin + capsule.segment.diff * t; // 現在のボールの座標を衝突位置に設定
+				}
+				Vector3 reflected = Reflect(ball.velocity, plane.normal); // 反射ベクトルの計算
+				Vector3 projectNormal = Project(reflected, plane.normal); // 法線方向の投影
+				Vector3 movingDirection = reflected - projectNormal; // 移動方向の計算
+				ball.velocity = projectNormal * e + movingDirection; // 反射後の速度の更新
+				ball.color = RED;
+			} else {
+				ball.color = WHITE;
+			}
+		}
 
 		// レンダリングパイプライン
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 0.1f, 100.0f);
@@ -93,22 +116,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// グリッドを描画
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		// アンカーから円錐振り子の先端までの線を描画
-		Vector3 start = conicalPendulum.anchor * viewProjectionMatrix * viewportMatrix;
-		Vector3 end = ball.position * viewProjectionMatrix * viewportMatrix;
-		Novice::DrawLine(
-			static_cast<int32_t>(start.x),
-			static_cast<int32_t>(start.y),
-			static_cast<int32_t>(end.x),
-			static_cast<int32_t>(end.y),
-			WHITE
-		);
+		// 平面を描画
+		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
 		// 球を描画
-		Sphere sphere{};
-		sphere.center = ball.position;
-		sphere.radius = ball.radius;
-		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, ball.color);
+		DrawSphere(Sphere{ball.position, ball.radius}, viewProjectionMatrix, viewportMatrix, ball.color);
 
 		///
 		/// ↑描画処理ここまで

@@ -1,6 +1,7 @@
 ﻿#define _USE_MATH_DEFINES
 #include "Draw.h"
 #include "Math.h"
+#include "Collision.h"
 #include <Novice.h>
 
 constexpr float pi = static_cast<float>(M_PI);	// 円周率

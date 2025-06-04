@@ -1,5 +1,4 @@
 ﻿#include "Collision.h"
-#include "Draw.h"
 #include <algorithm>
 
 Vector3 Project(const Vector3 &v1, const Vector3 &v2) {
@@ -81,6 +80,7 @@ bool isCollision(const Triangle &triangle, const Line &line) {
 	}
 	return false;
 }
+
 bool isCollision(const Triangle &triangle, const Ray &ray) {
 	Plane plane;
 	plane.normal = (triangle.vertices[1] - triangle.vertices[0]).cross(triangle.vertices[2] - triangle.vertices[0]);
@@ -101,6 +101,7 @@ bool isCollision(const Triangle &triangle, const Ray &ray) {
 	}
 	return false;
 }
+
 bool isCollision(const Triangle &triangle, const Segment &segment) {
 	Plane plane;
 	plane.normal = (triangle.vertices[1] - triangle.vertices[0]).cross(triangle.vertices[2] - triangle.vertices[0]);
@@ -217,4 +218,10 @@ bool isCollision(const AABB &aabb, const Segment &segment) {
 	float tmin = std::max(std::max(tNear.x, tNear.y), tNear.z);
 	float tmax = std::min(std::min(tFar.x, tFar.y), tFar.z);
 	return tmin <= tmax && tmax >= 0.0f && tmin <= 1.0f;
+}
+
+bool isCollision(const Capsule &capsule, const Plane &plane) {
+	return isCollision(Sphere{ capsule.segment.origin, capsule.radius }, plane)
+		|| isCollision(Sphere{ capsule.segment.origin + capsule.segment.diff, capsule.radius }, plane)
+		|| isCollision(capsule.segment, plane);
 }

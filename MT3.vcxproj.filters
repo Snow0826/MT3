@@ -26,6 +26,7 @@
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Math.cpp" />
+    <ClCompile Include="Physics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\KamataEngine\DirectXGame\audio\Audio.h">

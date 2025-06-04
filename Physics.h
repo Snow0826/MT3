@@ -36,3 +36,9 @@ struct ConicalPendulum {
 	float angle;	// 現在の角度
 	float angularVelocity;	// 角速度ω
 };
+
+/// @brief 反射ベクトルを求める関数
+/// @param input 入射ベクトル
+/// @param normal 法線
+/// @return 反射ベクトル
+Vector3 Reflect(const Vector3 &input, const Vector3 &normal);

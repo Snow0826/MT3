@@ -16,8 +16,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Novice::Initialize(kWindowTitle, kWindowWidth, kWindowHeight);
 
 	// キー入力結果を受け取る箱
-	char keys[256] = {0};
-	char preKeys[256] = {0};
+	char keys[256] = { 0 };
+	char preKeys[256] = { 0 };
 
 	// カメラの初期化
 	Camera camera;
@@ -40,9 +40,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Capsule capsule{};
 	capsule.radius = ball.radius;
 
-	constexpr float e = 0.8f; // 反発係数
 	float deltaTime = 1.0f / 60.0f; // 1フレームあたりの時間（秒）
 	bool isStarted = false; // シミュレーションが開始されたかどうか
+
+	constexpr float e = 0.8f; // 反発係数
+	constexpr float kEpsilon = 0.0001f; // 衝突判定のための小さな値
+	Vector3 reflected;	// 反射ベクトル
+	Vector3 projectNormal; // 法線方向の射影ベクトル
+	Vector3 movingDirection; // 移動方向
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -68,14 +73,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("BallPosition", &ball.position.x, 0.01f, -1.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // ボールの位置を調整
 		ImGui::DragFloat3("BallVelocity", &ball.velocity.x, 0.01f, -10.0f, 10.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // ボールの速度を調整
 		ImGui::DragFloat3("PlaneNormal", &plane.normal.x, 0.01f, -1.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // 平面の法線ベクトルを調整
+		ImGui::DragFloat3("Reflected", &reflected.x, 0.01f, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);	// 反射ベクトルを調整
+		ImGui::DragFloat3("ProjectNormal", &projectNormal.x, 0.01f, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // 法線方向の射影ベクトルを調整
+		ImGui::DragFloat3("MovingDirection", &movingDirection.x, 0.01f, -1.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp); // 移動方向を調整
 		plane.normal = plane.normal.normalized(); // 法線ベクトルを正規化
 		if (ImGui::Button("Reset")) {
 			isStarted = false; // シミュレーションをリセット
 			ball.position = { 0.8f, 1.2f, 0.3f }; // ボールの位置を初期化
 			ball.velocity = { 0.0f, 0.0f, 0.0f }; // ボールの速度を初期化
+			ball.color = WHITE; // ボールの色を初期化
 			capsule.segment.origin = ball.position; // カプセルの始点をボールの位置に設定
 			capsule.segment.diff = { 0.0f, 0.0f, 0.0f }; // カプセルの差分ベクトルを初期化
-			ball.color = WHITE; // ボールの色を初期化
+			plane.normal = Vector3{ -0.2f, 1.1f, -0.3f }.normalized();
 		}
 		ImGui::End();
 
@@ -85,18 +94,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ball.position += ball.velocity * deltaTime; // 位置の更新
 			capsule.segment.diff = ball.position - capsule.segment.origin; // ボールの位置の現在フレームと前フレームの差分ベクトルを計算
 
-			if (isCollision(capsule, plane) && ball.velocity.y < 0.0f) {
-				if (isCollision(capsule.segment, plane)) {
-					float t = (plane.distance - plane.normal.dot(capsule.segment.origin)) / plane.normal.dot(capsule.segment.diff);	// 衝突時刻の計算
-					ball.position = capsule.segment.origin + capsule.segment.diff * t; // 現在のボールの座標を衝突位置に設定
-				}
-				Vector3 reflected = Reflect(ball.velocity, plane.normal); // 反射ベクトルの計算
-				Vector3 projectNormal = Project(reflected, plane.normal); // 法線方向の投影
-				Vector3 movingDirection = reflected - projectNormal; // 移動方向の計算
-				ball.velocity = projectNormal * e + movingDirection; // 反射後の速度の更新
-				ball.color = RED;
-			} else {
-				ball.color = WHITE;
+			if (isCollision(capsule, plane)) {
+				reflected = Reflect(ball.velocity, plane.normal); // 反射ベクトルの計算
+				projectNormal = Project(reflected, plane.normal); // 法線方向の投影
+				movingDirection = reflected - projectNormal; // 移動方向の計算
+				ball.velocity = projectNormal * e + movingDirection; // 衝突後のボールの速度を更新
+				ball.position = capsule.segment.origin + kEpsilon * plane.normal;	// 衝突後のボールの位置を更新
 			}
 		}
 
@@ -120,7 +123,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
 		// 球を描画
-		DrawSphere(Sphere{ball.position, ball.radius}, viewProjectionMatrix, viewportMatrix, ball.color);
+		DrawSphere(Sphere{ ball.position, ball.radius }, viewProjectionMatrix, viewportMatrix, ball.color);
 
 		///
 		/// ↑描画処理ここまで
